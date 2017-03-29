@@ -6,27 +6,27 @@ import random
 import math
 import copy
 
-#TODO move to Sets instead of lists?
-#TODO power map editor
-#TODO get sucker on github
+#TODO test
 
 #Functions for various parts of the process
 
 #helper function for checking if user wants yes or no, defaults to no
 def pYesNo(text):
+	print("\n")
 	answer = raw_input(text+" (Y/N): ")
 	return answer.upper() == "Y" or answer.upper() == "YES"
 
 
 #processes CSVs gotten from raw input turns numbers from strings to ints and takes out spaces
 def proccessCSVs(text, validationValues=[], isInts=False):
+	print("\n")
 	inputValues = raw_input(text)
 	outputList = []
 	#turn values into ints and strip out white space, otherwise just strip out white space
 	if isInts:
-		outputList = [int(x.strip()) for x in  inputValues.split(",")]
+		outputList = [int(x.strip()) for x in  inputValues.split(",") if x.strip() != ""]
 	else:
-		outputList = [x.strip() for x in inputValues.split(",")]
+		outputList = [x.strip() for x in inputValues.split(",") if x.strip != ""]
 
 	#check if values exist in validationValues list, unless list is empty
 	if validationValues != []:
@@ -86,18 +86,18 @@ def chooseAi(props):
 				aiNum = int(math.floor(random.random()*len(nationList)))	
 				aiList.append(nationList.pop(aiNum)[0])	
 		else:
-			print "\nchoose from the AI Below:"
+			print "choose from the AI Below:"
 			for nation in nationList:
 				print str(nation[0]) +" "+ nation[1]
 
 					
 			#get list of ai choices from user
-			aiList = proccessCSVs( "\nEnter a comma seperated list of AI: " ,[int(n[0]) for n in nationList],True)
+			aiList = proccessCSVs( "Enter a comma seperated list of AI: " ,[int(n[0]) for n in nationList],True)
 			
 			#remove choosen nations from nation list
 			nationList = [n for n in nationList if n[0] not in aiList]
 
-		print aiLvl+" will have these civilizaitons added:"
+		print "\n"+aiLvl+" will have these civilizaitons added:"
 		for nation in nationTotalList:
 			if nation[0] in aiList:
 				print str(nation[0]) +" "+nation[1]
@@ -124,6 +124,9 @@ def chooseAi(props):
 def chooseMods(props):
 	modDir = "/home/ubuntu/dominions4/mods"
 
+	chooseMod = pYesNo("Do you want to add any mod?")
+	if not chooseMod:
+		return ""
 		
 	mods = cliGet(["ls",modDir])
 	modList = shlex.split(mods)
@@ -151,11 +154,56 @@ def chooseMods(props):
 
 #For chooinsg a made map or creating a random map
 def chooseMap(props):
-	randMap = pYesNo("Would you like to make a random map?")
+	fileMap = pYesNo("Would you like to select a map from file??")
 	mapCmd = ""
-	if randMap:
-		regionsPP = raw_input("choose how many tiles per player, (10,15,20)")
-		mapCmd = "--randmap "+regionsPP
+	if not fileMap:
+		advanced = pYesNo("do you want advanced map setup?")
+		if advanced:
+			loopMe = True
+			while loopMe:
+				waterPart = proccessCSVs("Enter River amount and sea level height, dfeault is 50,30: ",[],True)
+				wpCmds = ["seapart","mountpart"]
+				#set defaults
+				if len(waterPart) != len(wpCmds):
+					waterPart  = [50,30]
+			
+				percentPart = proccessCSVs("Enter percent of map that is mountains (20), forests (20), farm lands (15), wastes(10), swamps(10), caves(3): ",[],True)
+				ppCmds = ["mountpart","forestpart","farmpart","wastepart","swamppart","cavepart"]
+				#set defaults
+				if len(percentPart) != len(ppCmds):
+					percentPart = [20,20,15,10,10,3]
+				
+				NSwrapping =  pYesNo("Do you want north/south wrapping?") 
+				EWwrapping = pYesNo("Do you want east/west wrapping?")
+			
+				#create map command as it is so far
+				parts = waterPart + percentPart
+				typeCmds = wpCmds + ppCmds
+				cmds = []
+				for i in range(len(typeCmds)):
+					cmds.append("--" + typeCmds[i] + " " + str(parts[i]))
+				
+				mapCmd = " ".join(cmds)
+				
+				if NSwrapping:
+					mapCmd += " --vwrap "
+				if not EWwrapping:
+					mapCmd += " --nohwrap " 			
+
+	
+				tPP =  pYesNo("Do you want to choose tiles per person? (No chooses total tiles)")
+			
+				if tPP:
+					regionsPP = raw_input("choose how many tiles per player, (10,15,20): ")
+					mapCmd += " --randmap "+regionsPP
+				else:
+					regions = raw_input("choose how many tiles for the entire map, recomended 10-20 per player: ")
+					mapCmd += " --mapprov "+regions
+				print "Current map settings are : "+ mapCmd
+				loopMe = not pYesNo("Are you happy with these settings?")
+		else:			
+			regionsPP = raw_input("choose how many tiles per player, (10,15,20)")
+			mapCmd = "--randmap "+regionsPP
 	else:
 		#finds all the maps in main and custom map directories and lists them and lets you choose one
 		mainMapsDir = "/home/ubuntu/.local/share/Steam/steamapps/common/Dominions4/maps"
@@ -204,7 +252,7 @@ portNumber = raw_input("what port number? (1024-5000-ish) ")
 gameName = raw_input("what do you want the game called? ")
 
 
-rawCmd = dom4+" -S -T "+ ai+" "+mods+" "+domMap+" --port "+portNumber+" --era "+era+" "+gameName
+rawCmd = dom4+" -S -T -n "+ ai+" "+mods+" "+domMap+" --port "+portNumber+" --era "+era+" "+gameName
 
 #this slipts up the command into an array so it can be used by python call command
 call(shlex.split(rawCmd))
