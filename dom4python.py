@@ -6,7 +6,13 @@ import random
 import math
 import copy
 
-#TODO test
+#TODO make folder customization easy
+
+
+dom4Main= "/home/ubuntu/.local/share/Steam/steamapps/common/Dominions4/"
+dom4User= "/home/ubuntu/dominions4/"
+
+
 
 #Functions for various parts of the process
 
@@ -38,8 +44,8 @@ def proccessCSVs(text, validationValues=[], isInts=False):
 #this function allows a user to choose AI
 #current properties are [dom4 path,era]
 def chooseAi(props):
-	dom4 = props[0]
-	era = props[1]
+	dom4 = props[0]+"dom4.sh"
+	era = props[2]
 
 
 	#run cli command to get list of all nations 
@@ -122,7 +128,7 @@ def chooseAi(props):
 #chooses all mods
 #current properties are [dom4 path]
 def chooseMods(props):
-	modDir = "/home/ubuntu/dominions4/mods"
+	modDir = props[1]+"mods"
 
 	chooseMod = pYesNo("Do you want to add any mod?")
 	if not chooseMod:
@@ -206,8 +212,8 @@ def chooseMap(props):
 			mapCmd = "--randmap "+regionsPP
 	else:
 		#finds all the maps in main and custom map directories and lists them and lets you choose one
-		mainMapsDir = "/home/ubuntu/.local/share/Steam/steamapps/common/Dominions4/maps"
-		customMapDir = "/home/ubuntu/dominions4/maps"
+		mainMapsDir = props[0]+"maps"
+		customMapDir = props[1]+"maps"
 		mainMaps = shlex.split(cliGet(["ls",mainMapsDir]))
 		customMaps = shlex.split(cliGet(["ls",customMapDir]))
 		allMaps = mainMaps + customMaps
@@ -227,32 +233,43 @@ def chooseMap(props):
 
 	return mapCmd
 
+#this function is for keeping track of small one offs that don't deserve their own seciont
+def addMisc(props):
+	portNumber = raw_input("what port number? (1024-65535) ")
 
+	gameName = raw_input("what do you want the game called? ")
+
+	miscOptions = ""
+
+	addMore  = pYesNow("do you have any CLI commands you want to add on directly? ")
+	if addMore:
+		while loopMe:
+			miscOptions = raw_input("Add these commands now: ")
+			
+			loopMe = not pYesNo("Are you happy with the commands you added?")
+
+	return "--port "+portNumber+" --era "+era+" "+miscOptions
 
 		
-		
-
-
-#define the dom 4 location
-dom4= "/home/ubuntu/.local/share/Steam/steamapps/common/Dominions4/dom4.sh"
-
 
 #get era
 
 era = raw_input("what era do you want?  ")
 
-ai = chooseAi([dom4,era])
+props = [dom4Main,dom4User,era]
 
-mods = chooseMods([dom4])
+ai = chooseAi(props)
 
-domMap = chooseMap([dom4])
+mods = chooseMods(props)
 
-portNumber = raw_input("what port number? (1024-5000-ish) ")
+domMap = chooseMap(props)
+
+portNumber = raw_input("what port number? (1024-65535) ")
 
 gameName = raw_input("what do you want the game called? ")
 
 
-rawCmd = dom4+" -S -T -n "+ ai+" "+mods+" "+domMap+" --port "+portNumber+" --era "+era+" "+gameName
+rawCmd = dom4Main+"dom4.sh"+" -S -T -n "+ ai+" "+mods+" "+domMap+" --port "+portNumber+" --era "+era+" "+gameName
 
 #this slipts up the command into an array so it can be used by python call command
 call(shlex.split(rawCmd))
