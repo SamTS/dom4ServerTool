@@ -6,13 +6,8 @@ import random
 import math
 import copy
 
-#TODO make folder customization easy
-
-
 dom4Main= "/home/ubuntu/.local/share/Steam/steamapps/common/Dominions4/"
 dom4User= "/home/ubuntu/dominions4/"
-
-
 
 #Functions for various parts of the process
 
@@ -24,7 +19,7 @@ def pYesNo(text):
 
 
 #processes CSVs gotten from raw input turns numbers from strings to ints and takes out spaces
-def proccessCSVs(text, validationValues=[], isInts=False):
+def processCSVs(text, validationValues=[], isInts=False):
 	print("\n")
 	inputValues = raw_input(text)
 	outputList = []
@@ -39,13 +34,12 @@ def proccessCSVs(text, validationValues=[], isInts=False):
 		outputList = [x for x in outputList if x in validationValues ]
 
 	return outputList
-	
 
 #this function allows a user to choose AI
-#current properties are [dom4 path,era]
+#props are defined at bottom of file
 def chooseAi(props):
 	dom4 = props[0]+"dom4.sh"
-	era = props[2]
+	era = props[2] 
 
 
 	#run cli command to get list of all nations 
@@ -56,10 +50,10 @@ def chooseAi(props):
 
 	eraNations = " ".join(nations)
 
-	#make regex object, this makes a list with tuples withere the first gropu is first touple value (nation number) and second is nation naem
+	#make regex object, this makes a list with tuples where the first group is first tuples value (nation number) and second is nation name
 	nationList = re.findall('(\d+)\s*([^-\n]*)\n',eraNations)
 
-	#nation list also keeps track of civiliations that CAN be added (so as civiliations get added they get revmoved from nationList
+	#nation list also keeps track of civilizations that CAN be added (so as civilizations get added they get removed from nationList)
 	nationList = [ [int(n[0]), n[1]]  for n in nationList]
 
 	nationTotalList = copy.copy(nationList)
@@ -67,10 +61,10 @@ def chooseAi(props):
 	#difficulty List
 	diffList = ["easyai","normai","diffai","mightyai","masterai","impai"]
 
-	#generate dictioanry that has ta list of all the ais that will be at each difficulty level
+	#generate dictionary that has ta list of all the ais that will be at each difficulty level
 	aiDict = {aiLvl : [] for aiLvl in diffList}
 
-	#loop through to find out how many of each type of AI we want for the game, also whether random or choosen
+	#loop through to find out how many of each type of AI we want for the game, also whether random or chosen
 
 	loopMe = pYesNo("Would you like to add some AI?")
 	while loopMe:
@@ -98,7 +92,7 @@ def chooseAi(props):
 
 					
 			#get list of ai choices from user
-			aiList = proccessCSVs( "Enter a comma seperated list of AI: " ,[int(n[0]) for n in nationList],True)
+			aiList = processCSVs( "Enter a comma seperated list of AI: " ,[int(n[0]) for n in nationList],True)
 			
 			#remove choosen nations from nation list
 			nationList = [n for n in nationList if n[0] not in aiList]
@@ -145,7 +139,7 @@ def chooseMods(props):
 			print str(i+1) +" "+modList[i]
 	
 		#make sure choose a value in length of modList and turns it into integers
-		modChoice = proccessCSVs("Choose mod number in comma seperated list: ",range(1,len(modList)+1),True)
+		modChoice = processCSVs("Choose mod number in comma separated list: ",range(1,len(modList)+1),True)
 	
 		selectedMods = [modList[sm-1] for sm in modChoice]
 
@@ -158,7 +152,7 @@ def chooseMods(props):
 	return modMegaCmd
 	
 
-#For chooinsg a made map or creating a random map
+#For choosing a made map or creating a random map
 def chooseMap(props):
 	fileMap = pYesNo("Would you like to select a map from file??")
 	mapCmd = ""
@@ -167,13 +161,13 @@ def chooseMap(props):
 		if advanced:
 			loopMe = True
 			while loopMe:
-				waterPart = proccessCSVs("Enter River amount and sea level height, dfeault is 50,30: ",[],True)
+				waterPart = processCSVs("Enter River amount and sea level height, default is 50,30: ",[],True)
 				wpCmds = ["seapart","mountpart"]
 				#set defaults
 				if len(waterPart) != len(wpCmds):
 					waterPart  = [50,30]
 			
-				percentPart = proccessCSVs("Enter percent of map that is mountains (20), forests (20), farm lands (15), wastes(10), swamps(10), caves(3): ",[],True)
+				percentPart = processCSVs("Enter percent of map that is mountains (20), forests (20), farm lands (15), wastes(10), swamps(10), caves(3): ",[],True)
 				ppCmds = ["mountpart","forestpart","farmpart","wastepart","swamppart","cavepart"]
 				#set defaults
 				if len(percentPart) != len(ppCmds):
@@ -203,7 +197,7 @@ def chooseMap(props):
 					regionsPP = raw_input("choose how many tiles per player, (10,15,20): ")
 					mapCmd += " --randmap "+regionsPP
 				else:
-					regions = raw_input("choose how many tiles for the entire map, recomended 10-20 per player: ")
+					regions = raw_input("choose how many tiles for the entire map, recommended 10-20 per player: ")
 					mapCmd += " --mapprov "+regions
 				print "Current map settings are : "+ mapCmd
 				loopMe = not pYesNo("Are you happy with these settings?")
@@ -233,7 +227,7 @@ def chooseMap(props):
 
 	return mapCmd
 
-#this function is for keeping track of small one offs that don't deserve their own seciont
+#this function is for keeping track of small one offs that don't deserve their own section
 def addMisc(props):
 	portNumber = raw_input("what port number? (1024-65535) ")
 
@@ -250,10 +244,9 @@ def addMisc(props):
 
 	return "--port "+portNumber+" --era "+era+" "+miscOptions
 
-		
-
+#################################################################################################
+#Put all the pieces together
 #get era
-
 era = raw_input("what era do you want?  ")
 
 props = [dom4Main,dom4User,era]
@@ -271,6 +264,6 @@ gameName = raw_input("what do you want the game called? ")
 
 rawCmd = dom4Main+"dom4.sh"+" -S -T -n "+ ai+" "+mods+" "+domMap+" --port "+portNumber+" --era "+era+" "+gameName
 
-#this slipts up the command into an array so it can be used by python call command
+#this splits up the command into an array so it can be used by python call command
 call(shlex.split(rawCmd))
 
